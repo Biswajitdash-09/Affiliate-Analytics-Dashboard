@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Table from "@/components/ui/Table";
-import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/Icon";
+import CreateCampaignModal from "@/components/dashboard/CreateCampaignModal";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,20 +16,6 @@ const CampaignsPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  // Form State
-  const initialFormState = {
-    name: "",
-    url: "",
-    payoutType: "CPA", // Helper for UI logic
-    payoutAmount: "",
-    payoutCurrency: "INR",
-    payoutCustom: "",
-    status: "active"
-  };
-  const [formData, setFormData] = useState(initialFormState);
 
   // Search and View State
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,81 +60,6 @@ const CampaignsPage = () => {
   useEffect(() => {
     fetchCampaigns();
   }, []);
-
-  // Form Handlers
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
-
-    // Construct payout_rules based on type
-    let payout_rules;
-    if (formData.payoutType === "Custom") {
-      if (!formData.payoutCustom) {
-        setError("Please enter the custom payout rule details.");
-        setIsSubmitting(false);
-        return;
-      }
-      payout_rules = formData.payoutCustom;
-    } else if (formData.payoutType === "RevShare") {
-      if (!formData.payoutAmount) {
-        setError("Please enter the percentage amount.");
-        setIsSubmitting(false);
-        return;
-      }
-      payout_rules = {
-        type: "RevShare",
-        percentage: parseFloat(formData.payoutAmount),
-        duration: "lifetime", // Default for simplicity
-      };
-    } else {
-      // CPA or Fixed
-      if (!formData.payoutAmount) {
-        setError("Please enter the payout amount.");
-        setIsSubmitting(false);
-        return;
-      }
-      payout_rules = {
-        type: formData.payoutType,
-        amount: parseFloat(formData.payoutAmount),
-        currency: "INR",
-      };
-    }
-
-    const payload = {
-      name: formData.name,
-      url: formData.url,
-      payout_rules,
-      status: formData.status,
-    };
-
-    try {
-      const res = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setIsModalOpen(false);
-        setFormData(initialFormState);
-        fetchCampaigns(); // Refresh the list
-      } else {
-        setError(data.error || "Failed to create campaign");
-      }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Table Column Definitions
   const columns = [
@@ -225,7 +136,7 @@ const CampaignsPage = () => {
           }
           return (
             <div className="badge badge-primary badge-outline gap-1">
-              <Icon name="DollarSign" size={12} />
+              {rules.currency === 'INR' ? '₹' : <Icon name="DollarSign" size={12} />}
               {rules.type || "CPA"}
             </div>
           );
@@ -291,7 +202,7 @@ const CampaignsPage = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Page Header ... same ... */}
+      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-base-content flex items-center gap-2">
@@ -315,7 +226,7 @@ const CampaignsPage = () => {
         )}
       </div>
 
-      {/* Stats Overview ... same ... */}
+      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="stats shadow-sm bg-base-100 border border-base-200 overflow-hidden">
           <div className="stat relative overflow-hidden">
@@ -491,138 +402,13 @@ const CampaignsPage = () => {
         </div>
       </div>
 
-      {/* Create Campaign Modal ... same ... */}
-      <Modal
+      <CreateCampaignModal
         isOpen={isModalOpen}
-        onClose={() => !isSubmitting && setIsModalOpen(false)}
-        title="Create New Campaign"
-        size="md"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {/* Same form as before */}
-          <div className="bg-base-200/50 p-4 rounded-lg mb-4 text-sm text-base-content/70 flex gap-3 items-start">
-            <Icon name="Lightbulb" size={18} className="mt-0.5 text-warning shrink-0" />
-            <p>
-              Define your campaign details and payout structure. Use <code>{`{affiliate_id}`}</code> in the URL to track referrals.
-            </p>
-          </div>
-
-          {error && (
-            <div className="alert alert-error text-sm py-3 rounded-lg shadow-sm">
-              <Icon name="AlertCircle" size={18} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <Input
-            label="Campaign Name"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            placeholder="e.g. Summer Sale 2024"
-            required
-            disabled={isSubmitting}
-          />
-
-          <Input
-            label="Tracking URL"
-            name="url"
-            value={formData.url}
-            onChange={handleInputChange}
-            placeholder="https://example.com?ref={affiliate_id}"
-            required
-            disabled={isSubmitting}
-          />
-
-          <div className="divider text-xs font-medium text-base-content/50 my-2">PAYOUT RULES</div>
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-medium">Payout Model</span>
-            </label>
-            <select
-              name="payoutType"
-              value={formData.payoutType}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              className="select select-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all"
-            >
-              <option value="CPA">CPA (Cost Per Action)</option>
-              <option value="RevShare">Revenue Share (%)</option>
-              <option value="Fixed">Fixed Amount</option>
-              <option value="Custom">Custom Description</option>
-            </select>
-          </div>
-
-          {formData.payoutType === "Custom" ? (
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text font-medium">Rule Description</span>
-              </label>
-              <textarea
-                name="payoutCustom"
-                value={formData.payoutCustom}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                className="textarea textarea-bordered h-24 focus:ring-2 focus:ring-primary/20"
-                placeholder="e.g. ₹500 for first purchase, ₹250 for recurring..."
-              ></textarea>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label={formData.payoutType === "RevShare" ? "Percentage (%)" : "Amount"}
-                name="payoutAmount"
-                type="number"
-                step={formData.payoutType === "RevShare" ? "0.1" : "0.01"}
-                min="0"
-                value={formData.payoutAmount}
-                onChange={handleInputChange}
-                placeholder={formData.payoutType === "RevShare" ? "20" : "25.00"}
-                required
-                disabled={isSubmitting}
-              />
-
-            </div>
-          )}
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-medium">Initial Status</span>
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              className="select select-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all"
-            >
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          <div className="modal-action pt-4">
-            <Button
-              variant="ghost"
-              onClick={() => setIsModalOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              disabled={isSubmitting}
-              className="px-8"
-            >
-              Create Campaign
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchCampaigns}
+      />
     </div>
   );
 };
+
 export default CampaignsPage;

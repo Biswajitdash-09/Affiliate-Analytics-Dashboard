@@ -49,7 +49,7 @@ const Topbar = () => {
           >
             <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
               <span className="text-lg font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || "U"}
+                {user?.role === 'admin' ? "A" : (user?.name?.charAt(0).toUpperCase() || "U")}
               </span>
             </div>
           </div>
@@ -60,7 +60,7 @@ const Topbar = () => {
             <li className="menu-title px-4 py-2">
               <div className="flex flex-col">
                 <span className="font-bold text-base-content">
-                  {user?.name || "User"}
+                  {user?.role === 'admin' ? "System Admin" : (user?.name || "User")}
                 </span>
                 <span className="text-xs text-base-content/60 font-normal">
                   {user?.email || "user@example.com"}

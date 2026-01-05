@@ -16,7 +16,7 @@ export function middleware(request) {
 
     // Stricter limits for critical paths
     if (path.startsWith('/api/auth')) {
-        limit = 5; // 5 reqs per min for auth
+        limit = 20; // Increased from 5 to 20 for better DX/testing
     } else if (path.startsWith('/api/tracking')) {
         limit = 60; // 60 reqs per min for tracking
     }
@@ -38,7 +38,7 @@ export function middleware(request) {
     // Check limit
     if (requestLog.length >= limit) {
         return new NextResponse(
-            JSON.stringify({ success: false, message: 'Too many requests, please try again later.' }),
+            JSON.stringify({ success: false, error: 'Too many requests, please try again later.' }),
             { status: 429, headers: { 'Content-Type': 'application/json' } }
         );
     }

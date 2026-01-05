@@ -190,7 +190,8 @@ export async function POST(request) {
       }
 
       // Check if email exists
-      const existingUser = await usersCollection.findOne({ email: body.email });
+      const email = body.email?.trim().toLowerCase();
+      const existingUser = await usersCollection.findOne({ email });
       if (existingUser) {
         return NextResponse.json(
           { success: false, error: 'User with this email already exists' },
@@ -205,7 +206,7 @@ export async function POST(request) {
       // Create User
       const newUser = {
         name: body.name,
-        email: body.email,
+        email: email,
         password: hashedPassword,
         role: USER_ROLES.AFFILIATE, // Force role to affiliate
         createdAt: new Date().toISOString()

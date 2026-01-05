@@ -6,10 +6,12 @@ import Icon from "@/components/Icon";
 import Card from "@/components/ui/Card";
 import Chart from "@/components/ui/Chart";
 import DateRangeFilter from "@/components/ui/DateRangeFilter";
+import CreateCampaignModal from "@/components/dashboard/CreateCampaignModal";
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({
     kpis: {
       totalClicks: 0,
@@ -18,6 +20,7 @@ const DashboardPage = () => {
       conversionRate: 0,
     },
     chartData: [],
+    recentActivity: []
   });
   const [activeChartMetric, setActiveChartMetric] = useState("clicks");
   const [leaderboards, setLeaderboards] = useState({ topAffiliates: [], topCampaigns: [] });
@@ -141,7 +144,7 @@ const DashboardPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-base-content">
-            Welcome back, {user?.name?.split(" ")[0] || "Affiliate"}! 👋
+            Welcome back, {user?.role === 'admin' ? "Admin" : user?.name?.split(" ")[0]}! 👋
           </h1>
           <p className="text-base-content/60 mt-1">
             Here's your performance overview for the selected period.
@@ -163,7 +166,10 @@ const DashboardPage = () => {
           </div>
 
           {user?.role === 'admin' && (
-            <button className="btn btn-primary btn-sm shadow-lg shadow-primary/20">
+            <button
+              onClick={() => setIsCampaignModalOpen(true)}
+              className="btn btn-primary btn-sm shadow-lg shadow-primary/20"
+            >
               <Icon name="Plus" size={16} />
               New Campaign
             </button>
@@ -389,6 +395,17 @@ const DashboardPage = () => {
           </div>
         </Card>
       </div>
+
+      <CreateCampaignModal
+        isOpen={isCampaignModalOpen}
+        onClose={() => setIsCampaignModalOpen(false)}
+        onSuccess={() => {
+          const endDate = new Date();
+          const startDate = new Date();
+          startDate.setDate(endDate.getDate() - 30);
+          fetchAnalytics(startDate.toISOString(), endDate.toISOString());
+        }}
+      />
     </div>
   );
 };

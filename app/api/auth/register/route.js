@@ -20,13 +20,13 @@ export async function POST(request) {
     // Default role to AFFILIATE if not provided or invalid for public registration
     // In a real app, you might want to restrict 'admin' registration, 
     // but we'll allow the payload to define it if valid, defaulting to affiliate.
-    const role = body.role && Object.values(USER_ROLES).includes(body.role) 
-      ? body.role 
+    const role = body.role && Object.values(USER_ROLES).includes(body.role)
+      ? body.role
       : USER_ROLES.AFFILIATE;
 
     const userData = {
       name: body.name,
-      email: body.email,
+      email: body.email?.trim().toLowerCase(),
       password: body.password,
       role: role
     };
@@ -67,7 +67,7 @@ export async function POST(request) {
 
     // Insert user
     const result = await usersCollection.insertOne(newUser);
-    
+
     // If the user is an affiliate, create an empty affiliate profile
     if (newUser.role === USER_ROLES.AFFILIATE) {
       const affiliateProfile = {
@@ -77,19 +77,19 @@ export async function POST(request) {
         total_earnings: 0,
         createdAt: new Date().toISOString()
       };
-      
+
       await db.collection(AFFILIATE_PROFILES_COLLECTION).insertOne(affiliateProfile);
     }
 
     // Return success (excluding password)
     const { password, ...userWithoutPassword } = newUser;
-    
+
     return NextResponse.json(
-      { 
-        success: true, 
-        data: { 
-          ...userWithoutPassword, 
-          _id: result.insertedId.toString() 
+      {
+        success: true,
+        data: {
+          ...userWithoutPassword,
+          _id: result.insertedId.toString()
         },
         message: "User registered successfully"
       },

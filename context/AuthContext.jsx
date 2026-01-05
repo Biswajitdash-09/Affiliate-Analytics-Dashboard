@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
 
         return { success: true };
       } else {
-        return { success: false, error: data.error || "Login failed" };
+        return { success: false, error: data.error || data.message || "Login failed" };
       }
     } catch (error) {
       console.error("Login error:", error);

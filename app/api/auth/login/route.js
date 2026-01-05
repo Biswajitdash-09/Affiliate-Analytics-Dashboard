@@ -46,7 +46,8 @@ export async function POST(request) {
       );
     }
 
-    const { email, password } = body;
+    const { email: rawEmail, password } = body;
+    const email = rawEmail?.trim().toLowerCase();
 
     // Basic validation
     if (!email || !password) {

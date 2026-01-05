@@ -114,9 +114,9 @@ const AffiliatesPage = () => {
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="avatar placeholder">
-            <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 ring ring-base-200 ring-offset-1">
-              <span className="text-xs font-bold">
-                {row.user?.name?.substring(0, 2).toUpperCase() || "NA"}
+            <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 ring ring-base-200 ring-offset-1 flex items-center justify-center">
+              <span className="text-lg font-bold">
+                {row.user?.name?.charAt(0).toUpperCase() || "U"}
               </span>
             </div>
           </div>
