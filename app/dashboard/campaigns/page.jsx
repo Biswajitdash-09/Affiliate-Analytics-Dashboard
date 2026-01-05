@@ -463,7 +463,7 @@ const CampaignsPage = () => {
                           <span className="text-sm font-bold text-secondary">{campaign.payout_rules.percentage}% RevShare</span>
                         ) : (
                           <span className="text-sm font-bold text-success">
-                            {campaign.payout_rules.currency === 'INR' ? '₹' : campaign.payout_rules.currency} {campaign.payout_rules.amount} CPA
+                            {campaign.payout_rules.currency === 'INR' ? '₹' : campaign.payout_rules.currency} {campaign.payout_rules.amount} {campaign.payout_rules.type}
                           </span>
                         )}
                       </div>
