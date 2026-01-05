@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Icon from "@/components/Icon";
 import Button from "@/components/ui/Button";
@@ -37,29 +38,7 @@ const Topbar = () => {
 
       {/* Right Side: Actions & Profile */}
       <div className="flex-none gap-4">
-        {/* Notifications */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-            <div className="indicator">
-              <Icon name="Bell" size={20} />
-              <span className="badge badge-xs badge-primary indicator-item"></span>
-            </div>
-          </div>
-          <div
-            tabIndex={0}
-            className="mt-3 z-[1] card card-compact dropdown-content w-80 bg-base-100 shadow-xl border border-base-200"
-          >
-            <div className="card-body">
-              <span className="font-bold text-lg">Notifications</span>
-              <span className="text-info">3 unread messages</span>
-              <div className="card-actions">
-                <button className="btn btn-primary btn-block btn-sm">
-                  View all
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* User Profile */}
         <div className="dropdown dropdown-end">
@@ -68,7 +47,7 @@ const Topbar = () => {
             role="button"
             className="btn btn-ghost btn-circle avatar placeholder border border-base-300"
           >
-            <div className="bg-neutral text-neutral-content rounded-full w-10">
+            <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
               <span className="text-lg font-semibold">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </span>
@@ -76,7 +55,7 @@ const Topbar = () => {
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-base-100 rounded-box w-52 border border-base-200"
+            className="menu menu-sm dropdown-content mt-3 z-20 p-2 shadow-xl bg-base-100 rounded-box w-52 border border-base-200"
           >
             <li className="menu-title px-4 py-2">
               <div className="flex flex-col">
@@ -91,20 +70,7 @@ const Topbar = () => {
                 </span>
               </div>
             </li>
-            <div className="divider my-0"></div>
-            <li>
-              <a className="py-3">
-                <Icon name="User" size={16} />
-                Profile
-              </a>
-            </li>
-            <li>
-              <a className="py-3">
-                <Icon name="Settings" size={16} />
-                Settings
-              </a>
-            </li>
-            <div className="divider my-0"></div>
+
             <li>
               <button onClick={logout} className="text-error py-3 hover:bg-error/10">
                 <Icon name="LogOut" size={16} />

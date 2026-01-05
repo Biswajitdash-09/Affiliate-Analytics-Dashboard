@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit/js/pdfkit.standalone';
 
 const CLICK_EVENTS_COLLECTION = 'click_events';
 const REVENUES_COLLECTION = 'revenues';
@@ -152,15 +152,38 @@ export async function GET(request) {
             doc.moveDown();
 
             // Data rows (limit for PDF)
+            // Data rows (limit for PDF)
             const pdfData = data.slice(0, 50);
             for (const row of pdfData) {
-                x = 50;
-                const y = doc.y;
+                let x = 50;
+                const y = doc.y; // Start Y for this row
+                let maxRowHeight = 0;
+
+                // First pass: Calculate max height for the row
                 headers.forEach(h => {
-                    doc.text(String(row[h] || ''), x, y, { width: colWidth });
+                    const text = String(row[h] || '');
+                    const height = doc.heightOfString(text, { width: colWidth - 5 });
+                    if (height > maxRowHeight) maxRowHeight = height;
+                });
+
+                // Check if we need a new page
+                if (y + maxRowHeight > doc.page.height - 50) {
+                    doc.addPage();
+                    // Reprint headers ? Optional, but good for UX. for now just reset y
+                    // simplified for brevity
+                }
+
+                // Second pass: valid Y might have changed if added page
+                const currentY = doc.y;
+
+                headers.forEach(h => {
+                    const text = String(row[h] || '');
+                    doc.text(text, x, currentY, { width: colWidth - 5 });
                     x += colWidth;
                 });
-                doc.moveDown(0.5);
+
+                // Move down by max height + padding
+                doc.y = currentY + maxRowHeight + 10;
             }
 
             if (data.length > 50) {

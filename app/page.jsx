@@ -35,28 +35,22 @@ export default function Home() {
         {/* Decorative Background Blobs */}
         <div className="absolute top-20 right-[-10%] w-150 h-150 bg-primary/5 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-150 h-150 bg-secondary/5 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: "1s" }}></div>
-        
+
         <div className="hero-content text-center z-10 px-4 max-w-5xl flex-col">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-base-200/60 border border-base-300 text-sm font-medium text-base-content/70 mb-8 hover:bg-base-200 transition-colors cursor-default">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-            </span>
-            v2.0 Platform Live
-          </div>
+
 
           {/* Main Title */}
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-base-content mb-6 leading-tight">
-            <span className="text-primary">Affiliate Marketing Dashboard</span>
+            <span className="text-primary">Affiliate Analytics Dashboard</span>
           </h1>
-          
+
           {/* Description */}
           <p className="py-6 text-lg md:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed">
-            Track, manage, and optimize your affiliate marketing performance with real-time analytics. 
+            Track, manage, and optimize your affiliate marketing performance with real-time analytics.
             Scale your growth with precision data and powerful insights.
           </p>
-          
+
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-4 w-full sm:w-auto">
             <Link href="/login" className="w-full sm:w-auto">
@@ -68,7 +62,7 @@ export default function Home() {
                 Sign In
               </Button>
             </Link>
-            
+
             <Link href="/signup" className="w-full sm:w-auto">
               <Button
                 variant="outline"
@@ -91,7 +85,7 @@ export default function Home() {
                 <p className="text-base-content/60 text-sm">Monitor clicks, conversions, and revenue as they happen with zero latency.</p>
               </div>
             </div>
-            
+
             <div className="card bg-base-100/50 backdrop-blur-sm border border-base-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
               <div className="card-body p-6">
                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary mb-2">
@@ -101,7 +95,7 @@ export default function Home() {
                 <p className="text-base-content/60 text-sm">Onboard partners, set commission rates, and track individual performance.</p>
               </div>
             </div>
-            
+
             <div className="card bg-base-100/50 backdrop-blur-sm border border-base-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
               <div className="card-body p-6">
                 <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent mb-2">
@@ -114,7 +108,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Footer Simple */}
       <footer className="footer footer-center p-10 bg-base-200 text-base-content rounded-t-3xl mt-auto">
         <aside>
@@ -122,9 +116,7 @@ export default function Home() {
             <Icon name="BarChart2" size={24} className="text-primary" />
             <span className="font-bold text-xl">Affiliate Pro</span>
           </div>
-          <p className="font-medium text-base-content/60">
-            Empowering affiliate marketers since 2024.
-          </p>
+
           <p className="text-xs text-base-content/40 mt-2">
             Copyright © {new Date().getFullYear()} - All right reserved
           </p>

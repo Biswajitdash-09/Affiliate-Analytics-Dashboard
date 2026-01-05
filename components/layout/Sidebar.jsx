@@ -5,8 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
 
+import { useAuth } from "@/context/AuthContext";
+
 const Sidebar = () => {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const navItems = [
     {
@@ -14,11 +17,12 @@ const Sidebar = () => {
       href: "/dashboard",
       icon: "LayoutDashboard",
     },
-    {
+    // Only show Affiliates management to admins
+    ...(user?.role === 'admin' ? [{
       name: "Affiliates",
       href: "/dashboard/affiliates",
       icon: "Users",
-    },
+    }] : []),
     {
       name: "Campaigns",
       href: "/dashboard/campaigns",
@@ -65,11 +69,10 @@ const Sidebar = () => {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                    isActive
-                      ? "bg-primary text-primary-content shadow-md shadow-primary/20"
-                      : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${isActive
+                    ? "bg-primary text-primary-content shadow-md shadow-primary/20"
+                    : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
+                    }`}
                 >
                   <Icon name={item.icon} size={20} />
                   {item.name}
@@ -90,11 +93,10 @@ const Sidebar = () => {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                    isActive
-                      ? "bg-primary text-primary-content shadow-md shadow-primary/20"
-                      : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${isActive
+                    ? "bg-primary text-primary-content shadow-md shadow-primary/20"
+                    : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
+                    }`}
                 >
                   <Icon name={item.icon} size={20} />
                   {item.name}
@@ -106,23 +108,7 @@ const Sidebar = () => {
       </div>
 
       {/* Footer Area */}
-      <div className="p-4 border-t border-base-300/50">
-        <div className="bg-base-200/50 rounded-xl p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary">
-              <Icon name="Zap" size={16} />
-            </div>
-            <div>
-              <p className="text-sm font-bold">Pro Plan</p>
-              <p className="text-xs text-base-content/60">Active until Dec 31</p>
-            </div>
-          </div>
-          <div className="w-full bg-base-300 rounded-full h-1.5 mb-1">
-            <div className="bg-secondary h-1.5 rounded-full w-3/4"></div>
-          </div>
-          <p className="text-xs text-right text-base-content/50">75% Used</p>
-        </div>
-      </div>
+
     </aside>
   );
 };

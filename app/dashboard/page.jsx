@@ -162,10 +162,12 @@ const DashboardPage = () => {
             </ul>
           </div>
 
-          <button className="btn btn-primary btn-sm shadow-lg shadow-primary/20">
-            <Icon name="Plus" size={16} />
-            New Campaign
-          </button>
+          {user?.role === 'admin' && (
+            <button className="btn btn-primary btn-sm shadow-lg shadow-primary/20">
+              <Icon name="Plus" size={16} />
+              New Campaign
+            </button>
+          )}
         </div>
       </div>
 
@@ -278,24 +280,45 @@ const DashboardPage = () => {
               {/* Timeline Line */}
               <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-base-200"></div>
 
-              {[1, 2, 3, 4, 5].map((item, i) => (
-                <div key={item} className="flex gap-4 items-start py-3 relative group">
-                  <div className="w-8 h-8 rounded-full bg-base-100 border-2 border-base-200 flex items-center justify-center text-base-content/40 z-10 group-hover:border-primary group-hover:text-primary transition-colors">
-                    <Icon
-                      name={i % 2 === 0 ? "MousePointer2" : "CheckCircle"}
-                      size={14}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-base-content">
-                      {i % 2 === 0 ? "New click detected" : "Conversion recorded"}
-                    </p>
-                    <p className="text-xs text-base-content/50 mt-0.5">
-                      Campaign "Summer Sale" • {i * 5 + 2} mins ago
-                    </p>
-                  </div>
+              {(!analyticsData.recentActivity || analyticsData.recentActivity.length === 0) ? (
+                <div className="py-8 text-center text-base-content/50 text-sm">
+                  No recent activity
                 </div>
-              ))}
+              ) : (
+                analyticsData.recentActivity.map((item, i) => (
+                  <div key={i} className="flex gap-4 items-start py-3 relative group">
+                    <div className="w-8 h-8 rounded-full bg-base-100 border-2 border-base-200 flex items-center justify-center text-base-content/40 z-10 group-hover:border-primary group-hover:text-primary transition-colors">
+                      <Icon
+                        name={item.type === "click" ? "MousePointer2" : "CheckCircle"}
+                        size={14}
+                        className={item.type === "conversion" ? "text-success" : ""}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-base-content">
+                        {item.type === "click" ? "New click detected" : "Conversion recorded"}
+                      </p>
+                      <p className="text-xs text-base-content/50 mt-0.5">
+                        Campaign "{item.campaignName}" • {
+                          (() => {
+                            const diff = Math.floor((new Date() - new Date(item.createdAt)) / 60000);
+                            if (diff < 1) return "Just now";
+                            if (diff < 60) return `${diff} mins ago`;
+                            const hours = Math.floor(diff / 60);
+                            if (hours < 24) return `${hours} hours ago`;
+                            return new Date(item.createdAt).toLocaleDateString();
+                          })()
+                        }
+                      </p>
+                    </div>
+                    {item.type === "conversion" && (
+                      <div className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded">
+                        +{item.currency === 'INR' ? '₹' : item.currency}{item.amount}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
 
             <button className="btn btn-ghost btn-sm w-full mt-4 text-primary hover:bg-primary/5">
@@ -323,8 +346,8 @@ const DashboardPage = () => {
               leaderboards.topAffiliates.map((aff, i) => (
                 <div key={aff._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200/50">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? 'bg-warning/20 text-warning' :
-                      i === 1 ? 'bg-base-300 text-base-content' :
-                        'bg-base-200 text-base-content/60'
+                    i === 1 ? 'bg-base-300 text-base-content' :
+                      'bg-base-200 text-base-content/60'
                     }`}>
                     {i + 1}
                   </div>

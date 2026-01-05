@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Affiliate Marketing Dashboard",
+  title: "Affiliate Analytics Dashboard",
   description: "Track, manage, and optimize affiliate marketing performance.",
 };
 

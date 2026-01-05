@@ -214,6 +214,88 @@ export async function GET(request) {
       ]).toArray()
     ]);
 
+    // Fetch recent activity (Clicks & Conversions)
+    const [recentClicks, recentRevenues] = await Promise.all([
+      clickCollection.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: CAMPAIGNS_COLLECTION,
+            let: { campaignIdObj: { $toObjectId: "$campaignId" } }, // Try to convert string ID to ObjectId
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$campaignIdObj"] } } }
+            ],
+            as: "campaign"
+          }
+        },
+        // Fallback lookup for string IDs if ObjectId fails or assumes simple match
+        {
+          $lookup: {
+            from: CAMPAIGNS_COLLECTION,
+            localField: "campaignId",
+            foreignField: "_id",
+            as: "campaignFallback"
+          }
+        },
+        {
+          $project: {
+            type: { $literal: "click" },
+            campaignName: {
+              $ifNull: [
+                { $arrayElemAt: ["$campaign.name", 0] },
+                { $arrayElemAt: ["$campaignFallback.name", 0] },
+                "Unknown Campaign"
+              ]
+            },
+            createdAt: 1
+          }
+        }
+      ]).toArray(),
+      revenueCollection.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: CAMPAIGNS_COLLECTION,
+            let: { campaignIdObj: { $toObjectId: "$campaignId" } },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$campaignIdObj"] } } }
+            ],
+            as: "campaign"
+          }
+        },
+        {
+          $lookup: {
+            from: CAMPAIGNS_COLLECTION,
+            localField: "campaignId",
+            foreignField: "_id",
+            as: "campaignFallback"
+          }
+        },
+        {
+          $project: {
+            type: { $literal: "conversion" },
+            amount: "$amount",
+            currency: "$currency",
+            campaignName: {
+              $ifNull: [
+                { $arrayElemAt: ["$campaign.name", 0] },
+                { $arrayElemAt: ["$campaignFallback.name", 0] },
+                "Unknown Campaign"
+              ]
+            },
+            createdAt: 1
+          }
+        }
+      ]).toArray()
+    ]);
+
+    // Merge and sort recent activity
+    const recentActivity = [...recentClicks, ...recentRevenues]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 10);
+
     // Merge results by date
     const mergedChartData = [];
     const allDates = new Set([
@@ -250,7 +332,8 @@ export async function GET(request) {
       success: true,
       data: {
         kpis,
-        chartData: mergedChartData
+        chartData: mergedChartData,
+        recentActivity
       }
     });
 
