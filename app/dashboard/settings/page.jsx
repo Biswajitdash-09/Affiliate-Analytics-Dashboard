@@ -31,6 +31,20 @@ const SettingsPage = () => {
     allowRegistration: true,
   });
 
+  // Attribution Settings State (Admin Only)
+  const [attributionSettings, setAttributionSettings] = useState({
+    attributionModel: "last_click",
+    clickAttributionWindow: {
+      value: 30,
+      unit: "days",
+    },
+    cookieExpiry: {
+      value: 30,
+      unit: "days",
+    },
+    multipleTouchSessions: false,
+  });
+
   // Initialize profile data from AuthContext
   useEffect(() => {
     if (user) {
@@ -65,6 +79,22 @@ const SettingsPage = () => {
             supportEmail: data.data.supportEmail || "",
             allowRegistration: data.data.allowRegistration ?? true,
           });
+
+          // Load attribution settings
+          if (data.data.attribution) {
+            setAttributionSettings({
+              attributionModel: data.data.attribution.attributionModel || "last_click",
+              clickAttributionWindow: data.data.attribution.clickAttributionWindow || {
+                value: 30,
+                unit: "days",
+              },
+              cookieExpiry: data.data.attribution.cookieExpiry || {
+                value: 30,
+                unit: "days",
+              },
+              multipleTouchSessions: data.data.attribution.multipleTouchSessions || false,
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch settings:", error);
@@ -89,6 +119,33 @@ const SettingsPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  // Handle Attribution Settings Input Change
+  const handleAttributionChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle nested object paths for attribution
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setAttributionSettings((prev) => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value,
+        },
+      }));
+    } else if (name === 'multipleTouchSessions') {
+      setAttributionSettings((prev) => ({
+        ...prev,
+        [name]: e.target.checked,
+      }));
+    } else {
+      setAttributionSettings((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // Submit Profile Updates
@@ -163,6 +220,37 @@ const SettingsPage = () => {
         setMessage({ type: "success", text: "Global settings updated successfully" });
       } else {
         setMessage({ type: "error", text: data.error || "Failed to update settings" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An unexpected error occurred" });
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
+  // Submit Attribution Settings Updates
+  const handleAttributionSubmit = async (e) => {
+    e.preventDefault();
+    setMessage({ type: "", text: "" });
+    setIsSettingsLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ attribution: attributionSettings }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage({ type: "success", text: "Attribution settings updated successfully" });
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to update attribution settings" });
       }
     } catch (error) {
       setMessage({ type: "error", text: "An unexpected error occurred" });
@@ -345,6 +433,159 @@ const SettingsPage = () => {
                     className="w-full md:w-auto"
                   >
                     Update Global Settings
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          )}
+
+          {/* Admin Only: Attribution Settings */}
+          {user?.role === "admin" && (
+            <Card
+              title="Attribution Window Settings"
+              className="border-t-4 border-t-primary"
+            >
+              <div className="mb-6 bg-base-200/50 p-4 rounded-lg">
+                <div className="flex gap-3 items-start">
+                  <Icon name="Target" size={20} className="text-info shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-bold">Conversion Attribution</p>
+                    <p className="opacity-80">
+                      Configure how affiliate conversions are attributed and tracked. These settings affect commission calculations across all campaigns.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleAttributionSubmit} className="space-y-6">
+                {/* Attribution Model Selection */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Attribution Model</span>
+                    <span className="label-text-alt">
+                      <Icon name="Info" size={14} />
+                    </span>
+                  </label>
+                  <select
+                    name="attributionModel"
+                    value={attributionSettings.attributionModel}
+                    onChange={handleAttributionChange}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="last_click">Last Click (Default)</option>
+                    <option value="first_click">First Click</option>
+                    <option value="linear">Linear (Equal Distribution)</option>
+                    <option value="time_decay">Time Decay</option>
+                  </select>
+                  <label className="label">
+                    <span className="label-text-alt">
+                      {attributionSettings.attributionModel === "last_click" && "Credits commission to the last affiliate who referred the user."}
+                      {attributionSettings.attributionModel === "first_click" && "Credits commission to the first affiliate who referred the user."}
+                      {attributionSettings.attributionModel === "linear" && "Distributes commission evenly across all touched affiliates."}
+                      {attributionSettings.attributionModel === "time_decay" && "Credits decrease as time from click increases."}
+                    </span>
+                  </label>
+                </div>
+
+                {/* Click Attribution Window */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-medium">Click Window Value</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="clickAttributionWindow.value"
+                      value={attributionSettings.clickAttributionWindow.value}
+                      onChange={handleAttributionChange}
+                      min="1"
+                      className="input input-bordered w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-medium">Click Window Unit</span>
+                    </label>
+                    <select
+                      name="clickAttributionWindow.unit"
+                      value={attributionSettings.clickAttributionWindow.unit}
+                      onChange={handleAttributionChange}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="months">Months</option>
+                    </select>
+                  </div>
+                </div>
+                <label className="label pt-0">
+                  <span className="label-text-alt">
+                    Duration for which a click remains valid for conversion attribution.
+                  </span>
+                </label>
+
+                {/* Cookie Expiry Settings */}
+                <div className="divider text-sm text-base-content/50">Cookie & Storage Settings</div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-medium">Cookie Expiry Value</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="cookieExpiry.value"
+                      value={attributionSettings.cookieExpiry.value}
+                      onChange={handleAttributionChange}
+                      min="1"
+                      className="input input-bordered w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-medium">Cookie Expiry Unit</span>
+                    </label>
+                    <select
+                      name="cookieExpiry.unit"
+                      value={attributionSettings.cookieExpiry.unit}
+                      onChange={handleAttributionChange}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="months">Months</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Multiple Touch Sessions */}
+                <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4">
+                    <input
+                      type="checkbox"
+                      name="multipleTouchSessions"
+                      checked={attributionSettings.multipleTouchSessions}
+                      onChange={handleAttributionChange}
+                      className="checkbox checkbox-primary"
+                    />
+                    <div>
+                      <span className="label-text font-medium">Allow Multiple Touch Sessions</span>
+                      <span className="label-text-alt block">
+                        Credit affiliates even if user interacted with multiple affiliates
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="submit"
+                    variant="info"
+                    isLoading={isSettingsLoading}
+                    disabled={isSettingsLoading}
+                    className="w-full md:w-auto"
+                  >
+                    Update Attribution Settings
                   </Button>
                 </div>
               </form>

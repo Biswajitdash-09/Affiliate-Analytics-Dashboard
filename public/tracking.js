@@ -40,16 +40,42 @@
         },
 
         /**
+         * Extract UTM parameters from URL
+         */
+        extractUTMParameters: function (params) {
+            const utmParams = {};
+            const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+            
+            utmKeys.forEach(key => {
+                const value = params.get(key);
+                if (value) {
+                    utmParams[key] = value;
+                }
+            });
+
+            return utmParams;
+        },
+
+        /**
          * Track a click event
          */
         trackClick: function (affiliateId, campaignId) {
             console.log('AffiliatePro: Tracking click...', { affiliateId, campaignId });
 
+            const params = new URLSearchParams(window.location.search);
+            const utmParams = this.extractUTMParameters(params);
+
             const payload = {
                 affiliate_id: affiliateId,
                 campaign_id: campaignId,
                 referrer: document.referrer,
-                url: window.location.href
+                url: window.location.href,
+                // Send UTM parameters as query string for proper parsing
+                utm_source: utmParams.utm_source,
+                utm_medium: utmParams.utm_medium,
+                utm_campaign: utmParams.utm_campaign,
+                utm_term: utmParams.utm_term,
+                utm_content: utmParams.utm_content
             };
 
             // We use the GET endpoint (or POST) for clicks. 

@@ -40,6 +40,22 @@ export async function POST(request) {
     const redirectUrl = searchParams.get('redirect_url');
     const returnJson = searchParams.get('json') === 'true';
 
+    // Extract UTM parameters
+    const utmParams = {
+      utm_source: searchParams.get('utm_source'),
+      utm_medium: searchParams.get('utm_medium'),
+      utm_campaign: searchParams.get('utm_campaign'),
+      utm_term: searchParams.get('utm_term'),
+      utm_content: searchParams.get('utm_content'),
+    };
+
+    // Filter out null/undefined UTM values
+    Object.keys(utmParams).forEach(key => {
+      if (utmParams[key] === null) {
+        delete utmParams[key];
+      }
+    });
+
     if (!affiliateId || !campaignId) {
       return NextResponse.json(
         { error: 'Missing required parameters: affiliate_id or campaign_id' },
@@ -81,6 +97,9 @@ export async function POST(request) {
       ipAddress: ipAddress,
       referrer: referrer,
       userAgent: userAgent,
+
+      // UTM Parameters
+      utmParameters: Object.keys(utmParams).length > 0 ? utmParams : null,
 
       // Device and browser info
       deviceMetadata: {
