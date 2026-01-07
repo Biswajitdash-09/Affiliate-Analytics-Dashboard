@@ -1,4 +1,5 @@
 import { createSSEStream } from '@/lib/realtime';
+import { headers } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { logWarning, logInfo } from '@/lib/error-handler';
 import { ObjectId } from 'mongodb';
@@ -15,8 +16,8 @@ export async function GET(request) {
   // NOTE: This is optional - we could skip auth and handle it differently
   let user = null;
   const token = headersList.get('authorization')?.split(' ')[1] ||
-               headersList.get('cookie')?.match(/token=([^;]+)/)?.[1];
-            
+    headersList.get('cookie')?.match(/token=([^;]+)/)?.[1];
+
   if (token) {
     try {
       user = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
@@ -25,7 +26,7 @@ export async function GET(request) {
       // Continue without auth - SSE can work without it
     }
   }
-  
+
   // For unauthenticated connections, we can still broadcast updates
   // The client will handle filtering on the frontend
 
@@ -36,7 +37,7 @@ export async function GET(request) {
   const stream = createSSEStream(clientId, (send) => {
     // This callback receives the send function
     // We can use it to subscribe to database change events or external services
-    
+
     logInfo('SSE client connected', { clientId, user: user?.id });
 
     // Example: Listen to Redis pub/sub for distributed updates
