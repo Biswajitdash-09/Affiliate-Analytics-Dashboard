@@ -43,9 +43,8 @@ const nextConfig = {
             value: 'origin-when-cross-origin'
           },
           {
-            // Basic CSP - adjust as needed for external scripts/images
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://picsum.photos https://i.pravatar.cc; font-src 'self' data:;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' blob: data: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://api.stripe.com;"
           }
         ]
       }
