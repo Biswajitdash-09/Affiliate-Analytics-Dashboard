@@ -7,10 +7,12 @@ import LinkGenerator from "@/components/dashboard/LinkGenerator";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/Icon";
+import FunnelChart from "@/components/dashboard/FunnelChart";
 
 const AffiliatesPage = () => {
   // State Management
   const [affiliates, setAffiliates] = useState([]);
+  const [funnelData, setFunnelData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -47,6 +49,19 @@ const AffiliatesPage = () => {
     }
   };
 
+  // Fetch Funnel Data
+  const fetchFunnelData = async () => {
+    try {
+      const res = await fetch("/api/analytics/overview");
+      const data = await res.json();
+      if (data.success && data.data?.funnel) {
+        setFunnelData(data.data.funnel);
+      }
+    } catch (err) {
+      console.error("Error fetching funnel data:", err);
+    }
+  };
+
   // Handle Affiliate Status Update (Approve/Reject)
   const handleStatusUpdate = async (affiliateId, newStatus) => {
     try {
@@ -69,6 +84,7 @@ const AffiliatesPage = () => {
   // Initial Fetch
   useEffect(() => {
     fetchAffiliates();
+    fetchFunnelData();
   }, []);
 
   // Form Handlers

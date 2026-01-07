@@ -11,6 +11,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "@sentry/nextjs": "^8.55.0",
     "bcryptjs": "latest",
     "cookie": "^1.0.1",

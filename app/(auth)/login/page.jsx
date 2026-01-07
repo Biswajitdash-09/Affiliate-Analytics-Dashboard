@@ -106,9 +106,9 @@ const LoginPage = () => {
               />
               <label className="label">
                 <span className="label-text-alt"></span>
-                <a href="#" className="label-text-alt link link-primary hover:link-accent">
+                <Link href="/forgot-password" className="label-text-alt link link-primary hover:link-accent">
                   Forgot password?
-                </a>
+                </Link>
               </label>
             </div>
 
