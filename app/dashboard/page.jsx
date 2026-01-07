@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import Chart from "@/components/ui/Chart";
 import DateRangeFilter from "@/components/ui/DateRangeFilter";
 import CreateCampaignModal from "@/components/dashboard/CreateCampaignModal";
+import FunnelChart from "@/components/dashboard/FunnelChart";
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -160,8 +161,9 @@ const DashboardPage = () => {
               Export
             </label>
             <ul tabIndex={0} className="dropdown-content z-10 menu p-2 shadow-lg bg-base-100 rounded-box w-40 border border-base-200">
-              <li><a href="/api/export?type=csv&data=analytics" download>📄 CSV</a></li>
-              <li><a href="/api/export?type=pdf&data=analytics" download>📕 PDF</a></li>
+              <li><a href="/api/export?type=csv&data=analytics" download>📄 Raw Clicks (CSV)</a></li>
+              <li><a href="/api/export?type=csv&data=performance" download>📊 Performance Report (CSV)</a></li>
+              <li><a href="/api/export?type=pdf&data=performance" download>📕 Performance Report (PDF)</a></li>
             </ul>
           </div>
 
@@ -229,8 +231,8 @@ const DashboardPage = () => {
       {/* Main Chart & Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart Area */}
-        <div className="lg:col-span-2">
-          <Card className="h-full min-h-112.5">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="min-h-112.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <div>
                 <h3 className="text-lg font-bold">Performance Trends</h3>
@@ -271,6 +273,11 @@ const DashboardPage = () => {
                 valueFormatter={chartConfig[activeChartMetric].formatter}
               />
             )}
+          </Card>
+
+          {/* New Funnel Chart for Admin */}
+          <Card>
+            <FunnelChart data={analyticsData.funnel || []} />
           </Card>
         </div>
 

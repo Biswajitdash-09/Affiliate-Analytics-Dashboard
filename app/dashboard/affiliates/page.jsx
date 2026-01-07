@@ -319,6 +319,13 @@ const AffiliatesPage = () => {
         </div>
       </div>
 
+      {/* Funnel Chart Section */}
+      <div className="card bg-base-100 shadow-sm border border-base-200">
+        <div className="card-body">
+          <FunnelChart data={funnelData} />
+        </div>
+      </div>
+
       {/* Main Content Table */}
       <div className="card bg-base-100 shadow-sm border border-base-200">
         <div className="card-body p-0">

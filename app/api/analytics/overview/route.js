@@ -328,12 +328,18 @@ export async function GET(request) {
       conversionRate: parseFloat(conversionRate.toFixed(2))
     };
 
+    const funnel = [
+      { name: 'Clicks', value: totalClicks, fill: '#3b82f6' },
+      { name: 'Conversions', value: totalConversions, fill: '#10b981' }
+    ];
+
     return NextResponse.json({
       success: true,
       data: {
         kpis,
         chartData: mergedChartData,
-        recentActivity
+        recentActivity,
+        funnel
       }
     });
 

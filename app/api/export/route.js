@@ -98,6 +98,78 @@ export async function GET(request) {
                 filename = `payouts_export_${new Date().toISOString().split('T')[0]}`;
                 break;
 
+            case 'performance':
+                // Daily Performance Aggregation
+                const [clickDaily, revenueDaily] = await Promise.all([
+                    db.collection(CLICK_EVENTS_COLLECTION).aggregate([
+                        {
+                            $match: {
+                                createdAt: { $gte: dateFilter.$gte || new Date(0).toISOString(), $lte: dateFilter.$lte || new Date().toISOString() },
+                                filtered: false
+                            }
+                        },
+                        {
+                            $addFields: {
+                                dateObj: { $toDate: "$createdAt" }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    $dateToString: { format: "%Y-%m-%d", date: "$dateObj" }
+                                },
+                                clicks: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { _id: 1 } }
+                    ]).toArray(),
+                    db.collection(REVENUES_COLLECTION).aggregate([
+                        {
+                            $match: {
+                                createdAt: { $gte: dateFilter.$gte || new Date(0).toISOString(), $lte: dateFilter.$lte || new Date().toISOString() },
+                                status: 'succeeded'
+                            }
+                        },
+                        {
+                            $addFields: {
+                                dateObj: { $toDate: "$createdAt" }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    $dateToString: { format: "%Y-%m-%d", date: "$dateObj" }
+                                },
+                                conversions: { $sum: 1 },
+                                revenue: { $sum: "$amount" }
+                            }
+                        },
+                        { $sort: { _id: 1 } }
+                    ]).toArray()
+                ]);
+
+                // Merge Data
+                const allPerformanceDates = new Set([
+                    ...clickDaily.map(d => d._id),
+                    ...revenueDaily.map(d => d._id)
+                ]);
+
+                headers = ['Date', 'Clicks', 'Conversions', 'Revenue', 'Conversion Rate'];
+                data = Array.from(allPerformanceDates).sort().map(date => {
+                    const c = clickDaily.find(d => d._id === date) || { clicks: 0 };
+                    const r = revenueDaily.find(d => d._id === date) || { conversions: 0, revenue: 0 };
+                    const rate = c.clicks > 0 ? ((r.conversions / c.clicks) * 100).toFixed(2) + '%' : '0.00%';
+                    return {
+                        Date: date,
+                        Clicks: c.clicks,
+                        Conversions: r.conversions,
+                        Revenue: r.revenue.toFixed(2),
+                        'Conversion Rate': rate
+                    };
+                });
+                filename = `performance_report_${new Date().toISOString().split('T')[0]}`;
+                break;
+
             default:
                 return NextResponse.json({ success: false, error: 'Invalid data type' }, { status: 400 });
         }
