@@ -169,11 +169,27 @@ export async function GET(request) {
 
         const dailyPerformance = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
+        // 4. Get Funnel Metrics (Total Clicks vs Total Conversions)
+        const totalFunnelClicks = await db.collection(CLICK_EVENTS_COLLECTION).countDocuments({
+            affiliateId: affiliateId,
+            filtered: { $ne: true }
+        });
+
+        const totalFunnelConversions = await db.collection(REVENUE_COLLECTION).countDocuments({
+            affiliateId: affiliateId
+        });
+
+        const funnelMetrics = [
+            { name: 'Clicks', value: totalFunnelClicks, fill: '#3b82f6' }, // Primary Color
+            { name: 'Conversions', value: totalFunnelConversions, fill: '#10b981' } // Success Color
+        ];
+
         return NextResponse.json({
             success: true,
             data: {
                 campaigns: campaignPerformance,
-                daily: dailyPerformance
+                daily: dailyPerformance,
+                funnel: funnelMetrics
             }
         });
 

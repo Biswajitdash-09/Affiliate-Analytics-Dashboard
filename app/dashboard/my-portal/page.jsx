@@ -8,6 +8,7 @@ import LinkGenerator from "@/components/dashboard/LinkGenerator";
 import Icon from "@/components/Icon";
 import AnalyticsChart from "@/components/dashboard/AnalyticsChart";
 import CampaignTable from "@/components/dashboard/CampaignTable";
+import FunnelChart from "@/components/dashboard/FunnelChart";
 
 const MyPortalPage = () => {
     const { user, token } = useAuth();
@@ -228,8 +229,20 @@ const MyPortalPage = () => {
             {/* ANALYTICS TAB */}
             {activeTab === 'analytics' && (
                 <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
-                    {/* Charts */}
-                    <AnalyticsChart data={analyticsData?.daily || []} />
+                    {/* Charts Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Trend Chart */}
+                        <div className="lg:col-span-2">
+                            <AnalyticsChart data={analyticsData?.daily || []} />
+                        </div>
+
+                        {/* Funnel Chart */}
+                        <div className="lg:col-span-1">
+                            <div className="h-[350px] w-full bg-base-100 p-4 rounded-xl border border-base-200 shadow-sm">
+                                <FunnelChart data={analyticsData?.funnel || []} />
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Campaign Performance Table */}
                     <CampaignTable campaigns={analyticsData?.campaigns || []} />
