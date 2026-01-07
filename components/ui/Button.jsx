@@ -10,6 +10,7 @@ const Button = ({
   isLoading = false,
   disabled = false,
   type = "button",
+  fullWidth = false,
   onClick,
   ...props
 }) => {
@@ -35,9 +36,8 @@ const Button = ({
   return (
     <button
       type={type}
-      className={`btn ${variantClasses[variant] || "btn-primary"} ${
-        sizeClasses[size] || "btn-md"
-      } ${className}`}
+      className={`btn ${variantClasses[variant] || "btn-primary"} ${sizeClasses[size] || "btn-md"
+        } ${fullWidth ? "w-full" : ""} ${className}`}
       disabled={disabled || isLoading}
       onClick={onClick}
       {...props}

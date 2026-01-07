@@ -50,6 +50,12 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      { module: /node_modules\/@opentelemetry\/instrumentation/ }
+    ];
+    return config;
   }
 };
 
