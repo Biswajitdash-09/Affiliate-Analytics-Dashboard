@@ -1,6 +1,6 @@
 import db from "@/lib/db";
 
-const REVENUE_COLLECTION = "revenues";
+export const REVENUE_COLLECTION = "revenues";
 
 /**
  * Revenue Model - Tracks Stripe payments and conversions
@@ -40,7 +40,7 @@ export const Revenue = {
     }
 
     if (data.commissionAmount !== undefined && typeof data.commissionAmount !== 'number') {
-        errors.push("Commission Amount must be a number");
+      errors.push("Commission Amount must be a number");
     }
 
     return errors.length > 0 ? errors.join(', ') : null;
