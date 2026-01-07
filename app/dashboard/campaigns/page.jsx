@@ -6,6 +6,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/Icon";
 import CreateCampaignModal from "@/components/dashboard/CreateCampaignModal";
+import GetLinkModal from "@/components/dashboard/GetLinkModal";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,6 +17,8 @@ const CampaignsPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   // Search and View State
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,14 +49,10 @@ const CampaignsPage = () => {
     }
   };
 
-  const handleGetLink = (campaignId) => {
+  const handleGetLink = (campaign) => {
     if (!user?._id) return;
-    const baseUrl = window.location.origin;
-    const trackingUrl = `${baseUrl}/api/tracking/click?affiliate_id=${user._id}&campaign_id=${campaignId}`;
-
-    navigator.clipboard.writeText(trackingUrl).then(() => {
-      alert("Tracking link copied to clipboard!");
-    });
+    setSelectedCampaign(campaign);
+    setLinkModalOpen(true);
   };
 
   // Initial Fetch
@@ -184,7 +183,7 @@ const CampaignsPage = () => {
             className="text-primary hover:bg-primary/10"
             onClick={(e) => {
               e.stopPropagation();
-              handleGetLink(row._id);
+              handleGetLink(row);
             }}
           >
             <Icon name="Link" size={16} className="mr-1" />
@@ -386,7 +385,7 @@ const CampaignsPage = () => {
                           <Button
                             variant="primary"
                             className="w-full shadow-lg shadow-primary/20"
-                            onClick={() => handleGetLink(campaign._id)}
+                            onClick={() => handleGetLink(campaign)}
                           >
                             <Icon name="Link" size={16} className="mr-2" />
                             Get Tracking Link
@@ -406,6 +405,13 @@ const CampaignsPage = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchCampaigns}
+      />
+
+      <GetLinkModal
+        isOpen={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        campaign={selectedCampaign}
+        affiliateId={user?._id}
       />
     </div>
   );
