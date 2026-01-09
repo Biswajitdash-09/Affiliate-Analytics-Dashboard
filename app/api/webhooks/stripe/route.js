@@ -57,6 +57,14 @@ export async function POST(request) {
       const dispute = event.data.object;
       await handleDispute(dispute);
     }
+    // Handle recurring subscription payments
+    else if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object;
+      // Only process subscription renewals, not the initial payment
+      if (invoice.billing_reason === 'subscription_cycle') {
+        await handleSubscriptionRenewal(invoice);
+      }
+    }
 
     return NextResponse.json({ received: true, event: event.type });
   } catch (error) {
@@ -351,5 +359,80 @@ async function updateAffiliateEarnings(database, affiliateId, amount) {
     );
   } catch (error) {
     console.error('Error updating affiliate earnings:', error);
+  }
+}
+
+/**
+ * Handle invoice.payment_succeeded for subscription renewals
+ * Generates recurring commission for affiliates
+ */
+async function handleSubscriptionRenewal(invoice) {
+  const { db: database } = await db.getConnection();
+
+  try {
+    const subscriptionId = invoice.subscription;
+    const paymentIntentId = invoice.payment_intent;
+    const amount = invoice.amount_paid / 100; // Convert from cents
+    const currency = invoice.currency?.toUpperCase() || 'INR';
+
+    // Find the original revenue record linked to this subscription to get attribution
+    const originalRecord = await database.collection(REVENUE_COLLECTION).findOne({
+      'metadata.subscription': subscriptionId,
+    });
+
+    if (!originalRecord) {
+      console.log('Subscription renewal without original attribution:', subscriptionId);
+      return; // No attribution found, skip commission
+    }
+
+    // Calculate commission based on affiliate profile
+    let commissionAmount = 0;
+    if (originalRecord.affiliateId) {
+      const profile = await database.collection(AFFILIATE_PROFILES_COLLECTION).findOne({
+        userId: originalRecord.affiliateId,
+      });
+
+      if (profile) {
+        const rate = getCommissionRate(profile, profile.total_earnings || 0);
+        commissionAmount = Math.round(amount * rate * 100) / 100;
+      } else {
+        commissionAmount = Math.round(amount * 0.10 * 100) / 100; // Default 10%
+      }
+    }
+
+    // Create revenue record for the renewal
+    const renewalRecord = {
+      stripePaymentId: paymentIntentId,
+      stripeInvoiceId: invoice.id,
+      amount,
+      currency,
+      status: 'succeeded',
+      affiliateId: originalRecord.affiliateId,
+      campaignId: originalRecord.campaignId,
+      commissionAmount,
+      metadata: {
+        billingReason: invoice.billing_reason,
+        subscription: subscriptionId,
+        customerEmail: invoice.customer_email,
+        isRenewal: true,
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    await database.collection(REVENUE_COLLECTION).insertOne(renewalRecord);
+
+    console.log('Subscription renewal recorded:', {
+      invoiceId: invoice.id,
+      amount,
+      commission: commissionAmount,
+      affiliateId: originalRecord.affiliateId,
+    });
+
+    // Update affiliate earnings
+    if (originalRecord.affiliateId && commissionAmount > 0) {
+      await updateAffiliateEarnings(database, originalRecord.affiliateId, commissionAmount);
+    }
+  } catch (error) {
+    console.error('Error handling subscription renewal:', error);
   }
 }
