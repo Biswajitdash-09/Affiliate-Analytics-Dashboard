@@ -199,68 +199,149 @@ export async function GET(request) {
                 }
             });
         } else if (type === 'pdf') {
-            // Generate PDF
-            const doc = new PDFDocument({ margin: 50 });
+            // Generate Modern PDF Report
+            const doc = new PDFDocument({
+                margin: 50,
+                size: 'A4',
+                bufferPages: true
+            });
             const chunks = [];
 
             doc.on('data', chunk => chunks.push(chunk));
 
-            // Title
-            doc.fontSize(18).text(`${dataType.charAt(0).toUpperCase() + dataType.slice(1)} Report`, { align: 'center' });
-            doc.moveDown();
-            doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
-            doc.moveDown(2);
+            // Brand Colors
+            const primaryColor = '#6366f1'; // Indigo
+            const darkColor = '#1e293b'; // Slate 800
+            const lightGray = '#f1f5f9'; // Slate 100
+            const mediumGray = '#64748b'; // Slate 500
 
-            // Simple table
-            doc.fontSize(8);
-            const colWidth = 480 / headers.length;
+            // Header Bar
+            doc.rect(0, 0, doc.page.width, 80).fill(primaryColor);
 
-            // Header row
-            let x = 50;
+            // Logo / Brand Text
+            doc.fillColor('#ffffff')
+                .fontSize(24)
+                .font('Helvetica-Bold')
+                .text('AffiliatePro', 50, 25);
+
+            doc.fontSize(10)
+                .font('Helvetica')
+                .text('Performance Analytics Report', 50, 52);
+
+            // Report Title (below header)
+            doc.fillColor(darkColor)
+                .fontSize(20)
+                .font('Helvetica-Bold')
+                .text(`${dataType.charAt(0).toUpperCase() + dataType.slice(1)} Report`, 50, 110);
+
+            // Subtitle / Meta
+            doc.fillColor(mediumGray)
+                .fontSize(10)
+                .font('Helvetica')
+                .text(`Generated: ${new Date().toLocaleString()}`, 50, 138);
+
+            if (startDate || endDate) {
+                doc.text(`Date Range: ${startDate || 'Start'} to ${endDate || 'Now'}`, 50, 152);
+            }
+
+            doc.moveDown(4);
+
+            // Summary Cards (for performance reports)
+            if (dataType === 'performance' && data.length > 0) {
+                const totalClicks = data.reduce((sum, d) => sum + (d.Clicks || 0), 0);
+                const totalConversions = data.reduce((sum, d) => sum + (d.Conversions || 0), 0);
+                const totalRevenue = data.reduce((sum, d) => sum + parseFloat(d.Revenue || 0), 0);
+
+                const cardY = doc.y;
+                const cardWidth = 150;
+                const cardHeight = 60;
+                const cardGap = 20;
+
+                // Card 1: Total Clicks
+                doc.rect(50, cardY, cardWidth, cardHeight).fill(lightGray);
+                doc.fillColor(mediumGray).fontSize(9).text('TOTAL CLICKS', 60, cardY + 10);
+                doc.fillColor(darkColor).fontSize(18).font('Helvetica-Bold').text(totalClicks.toLocaleString(), 60, cardY + 28);
+
+                // Card 2: Conversions
+                doc.rect(50 + cardWidth + cardGap, cardY, cardWidth, cardHeight).fill(lightGray);
+                doc.fillColor(mediumGray).fontSize(9).font('Helvetica').text('CONVERSIONS', 60 + cardWidth + cardGap, cardY + 10);
+                doc.fillColor(darkColor).fontSize(18).font('Helvetica-Bold').text(totalConversions.toLocaleString(), 60 + cardWidth + cardGap, cardY + 28);
+
+                // Card 3: Revenue
+                doc.rect(50 + 2 * (cardWidth + cardGap), cardY, cardWidth, cardHeight).fill(lightGray);
+                doc.fillColor(mediumGray).fontSize(9).font('Helvetica').text('TOTAL REVENUE', 60 + 2 * (cardWidth + cardGap), cardY + 10);
+                doc.fillColor(darkColor).fontSize(18).font('Helvetica-Bold').text(`INR ${totalRevenue.toFixed(2)}`, 60 + 2 * (cardWidth + cardGap), cardY + 28);
+
+                doc.y = cardY + cardHeight + 30;
+            }
+
+            // Table Header
+            doc.font('Helvetica');
+            const tableTop = doc.y;
+            const tableWidth = doc.page.width - 100;
+            const colWidth = tableWidth / headers.length;
+
+            // Header Row Background
+            doc.rect(50, tableTop, tableWidth, 25).fill(darkColor);
+
+            // Header Text
+            let x = 55;
+            doc.fillColor('#ffffff').fontSize(9).font('Helvetica-Bold');
             headers.forEach(h => {
-                doc.text(h, x, doc.y, { width: colWidth, continued: false });
+                doc.text(h.toUpperCase(), x, tableTop + 8, { width: colWidth - 10 });
                 x += colWidth;
             });
-            doc.moveDown();
 
-            // Data rows (limit for PDF)
-            // Data rows (limit for PDF)
+            doc.y = tableTop + 30;
+
+            // Data Rows
             const pdfData = data.slice(0, 50);
+            let rowIndex = 0;
+
             for (const row of pdfData) {
-                let x = 50;
-                const y = doc.y; // Start Y for this row
-                let maxRowHeight = 0;
+                const rowY = doc.y;
 
-                // First pass: Calculate max height for the row
-                headers.forEach(h => {
-                    const text = String(row[h] || '');
-                    const height = doc.heightOfString(text, { width: colWidth - 5 });
-                    if (height > maxRowHeight) maxRowHeight = height;
-                });
-
-                // Check if we need a new page
-                if (y + maxRowHeight > doc.page.height - 50) {
-                    doc.addPage();
-                    // Reprint headers ? Optional, but good for UX. for now just reset y
-                    // simplified for brevity
+                // Alternating row background
+                if (rowIndex % 2 === 0) {
+                    doc.rect(50, rowY - 3, tableWidth, 20).fill(lightGray);
                 }
 
-                // Second pass: valid Y might have changed if added page
-                const currentY = doc.y;
+                // Check for page break
+                if (rowY > doc.page.height - 80) {
+                    doc.addPage();
+                    doc.y = 50;
+                }
 
-                headers.forEach(h => {
+                let x = 55;
+                const currentRowY = doc.y;
+                doc.fillColor(darkColor).fontSize(8).font('Helvetica');
+                headers.forEach((h, colIndex) => {
                     const text = String(row[h] || '');
-                    doc.text(text, x, currentY, { width: colWidth - 5 });
+                    doc.text(text, x, currentRowY, { width: colWidth - 10, lineBreak: false });
                     x += colWidth;
                 });
 
-                // Move down by max height + padding
-                doc.y = currentY + maxRowHeight + 10;
+                doc.y = rowY + 18;
+                rowIndex++;
             }
 
             if (data.length > 50) {
                 doc.moveDown();
-                doc.text(`... and ${data.length - 50} more rows. Download CSV for full data.`);
+                doc.fillColor(mediumGray).fontSize(9)
+                    .text(`... and ${data.length - 50} more rows. Download CSV for full data.`, 50);
+            }
+
+            // Footer
+            const pageCount = doc.bufferedPageRange().count;
+            for (let i = 0; i < pageCount; i++) {
+                doc.switchToPage(i);
+                doc.fillColor(mediumGray).fontSize(8)
+                    .text(
+                        `Page ${i + 1} of ${pageCount} | AffiliatePro © ${new Date().getFullYear()}`,
+                        50,
+                        doc.page.height - 30,
+                        { align: 'center', width: doc.page.width - 100 }
+                    );
             }
 
             doc.end();

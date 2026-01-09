@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import Icon from "@/components/Icon";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -91,9 +92,11 @@ const HelpPage = () => {
                                 Need to integrate postbacks or use our API? Check out our detailed technical documentation.
                             </p>
                         </div>
-                        <Button variant="outline" className="shrink-0">
-                            View Docs
-                        </Button>
+                        <Link href="/dashboard/postback-docs">
+                            <Button variant="outline" className="shrink-0">
+                                View Docs
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 
