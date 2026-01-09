@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { AFFILIATE_PROFILES_COLLECTION } from '@/models/AffiliateProfile';
 import { ObjectId } from 'mongodb';
+import { requireAdmin, getAuthUser } from '@/lib/auth';
 
 const ADJUSTMENTS_COLLECTION = 'adjustments';
 
@@ -10,6 +11,10 @@ const ADJUSTMENTS_COLLECTION = 'adjustments';
  * List all manual adjustments
  */
 export async function GET(request) {
+    // Require admin authentication
+    const authError = requireAdmin(request);
+    if (authError) return authError;
+
     try {
         const db = await getDb();
         const adjustments = await db.collection(ADJUSTMENTS_COLLECTION)
@@ -31,6 +36,13 @@ export async function GET(request) {
  * Payload: { affiliateId, type: 'commission' | 'clicks', amount, reason }
  */
 export async function POST(request) {
+    // Require admin authentication
+    const authError = requireAdmin(request);
+    if (authError) return authError;
+
+    // Get authenticated admin user
+    const admin = getAuthUser(request);
+
     try {
         const body = await request.json();
         const { affiliateId, type, amount, reason } = body;
@@ -64,7 +76,7 @@ export async function POST(request) {
             type, // 'commission' or 'clicks'
             amount: parseFloat(amount),
             reason: reason || '',
-            processedBy: 'admin', // TODO: get from session
+            processedBy: admin?.userId || admin?.email || 'admin',
             createdAt: new Date().toISOString()
         };
 

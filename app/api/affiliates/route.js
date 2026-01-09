@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { getDb } from '@/lib/db';
 import { USERS_COLLECTION, USER_ROLES } from '@/models/User';
 import { AFFILIATE_PROFILES_COLLECTION, AFFILIATE_STATUS, validateAffiliateProfile } from '@/models/AffiliateProfile';
+import { requireAdmin } from '@/lib/auth';
 
 /**
  * Helper function to seed sample affiliates if the collection is empty.
@@ -81,6 +82,10 @@ async function seedSampleAffiliates(db) {
  * Fetches all affiliate profiles joined with their user details.
  */
 export async function GET(request) {
+  // Require admin authentication
+  const authError = requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const db = await getDb();
 
@@ -141,6 +146,10 @@ export async function GET(request) {
  * 2. Create new user & profile: Provide `name`, `email`, `password`
  */
 export async function POST(request) {
+  // Require admin authentication
+  const authError = requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const db = await getDb();
@@ -270,6 +279,10 @@ export async function POST(request) {
  * Payload: { affiliateId, status?, commission_rate? }
  */
 export async function PUT(request) {
+  // Require admin authentication
+  const authError = requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { affiliateId, status, commission_rate } = body;

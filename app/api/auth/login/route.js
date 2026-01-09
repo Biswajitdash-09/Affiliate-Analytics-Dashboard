@@ -91,7 +91,14 @@ export async function POST(request) {
       role: user.role
     };
 
-    const secret = process.env.JWT_SECRET || 'fallback-secret-key-do-not-use-in-production';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('CRITICAL: JWT_SECRET is not configured');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     const token = jwt.sign(
       tokenPayload,

@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { PAYOUTS_COLLECTION, validatePayout, PAYOUT_STATUS } from '@/models/Payout';
 import { AFFILIATE_PROFILES_COLLECTION } from '@/models/AffiliateProfile';
 import { ObjectId } from 'mongodb';
+import { requireAdmin, getAuthUser } from '@/lib/auth';
 
 /**
  * GET /api/payouts
@@ -10,6 +11,10 @@ import { ObjectId } from 'mongodb';
  * Query params: affiliateId, status
  */
 export async function GET(request) {
+    // Require admin authentication
+    const authError = requireAdmin(request);
+    if (authError) return authError;
+
     try {
         const { searchParams } = new URL(request.url);
         const affiliateId = searchParams.get('affiliateId');
@@ -44,6 +49,13 @@ export async function GET(request) {
  * Payload: { affiliateId, amount, method, transactionId, notes }
  */
 export async function POST(request) {
+    // Require admin authentication
+    const authError = requireAdmin(request);
+    if (authError) return authError;
+
+    // Get authenticated admin user
+    const admin = getAuthUser(request);
+
     try {
         const body = await request.json();
 
@@ -91,7 +103,7 @@ export async function POST(request) {
             method: body.method || 'manual',
             transactionId: body.transactionId,
             notes: body.notes,
-            processedBy: 'admin', // TODO: get from session
+            processedBy: admin?.userId || admin?.email || 'admin',
             createdAt: new Date().toISOString(),
             completedAt: new Date().toISOString()
         };
