@@ -87,7 +87,7 @@ export async function POST(request) {
 
         if (type === 'commission') {
             updateFields.total_earnings = (profile.total_earnings || 0) + parseFloat(amount);
-            updateFields.pending_payouts = (profile.pending_payouts || 0) + parseFloat(amount);
+            updateFields.pendingPayouts = (profile.pendingPayouts || 0) + parseFloat(amount);
         } else if (type === 'clicks') {
             updateFields.total_clicks = (profile.total_clicks || 0) + parseInt(amount);
         }

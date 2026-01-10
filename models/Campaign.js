@@ -44,9 +44,10 @@ export function validateCampaign(data) {
 
 /**
  * Creates indexes for the Campaigns collection
- * @param {import('mongodb').Db} db 
+ * @param {import('mongodb').Db} db
  */
 export async function initCampaignIndexes(db) {
-  await db.collection(CAMPAIGNS_COLLECTION).createIndex({ name: 1 });
-  await db.collection(CAMPAIGNS_COLLECTION).createIndex({ status: 1 });
+  await db.collection(CAMPAIGNS_COLLECTION).createIndex({ name: 1 }, { unique: true }); // Prevent duplicate names
+  await db.collection(CAMPAIGNS_COLLECTION).createIndex({ status: 1 }, { sparse: true }); // Filter by status
+  await db.collection(CAMPAIGNS_COLLECTION).createIndex({ createdAt: -1 }); // Sort by newest first
 }

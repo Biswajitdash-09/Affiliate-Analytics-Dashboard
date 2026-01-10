@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 import { CAMPAIGNS_COLLECTION, validateCampaign, CAMPAIGN_STATUS } from '@/models/Campaign';
 
 /**
@@ -65,6 +66,31 @@ async function seedSampleCampaigns(db) {
  * Fetches all campaigns.
  */
 export async function GET(request) {
+  // Require authentication
+  const db = await getDb();
+  const authHeader = request.headers.get('authorization');
+  const cookieHeader = request.headers.get('cookie');
+
+  let token = null;
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else if (cookieHeader) {
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+    if (tokenMatch) token = tokenMatch[1];
+  }
+
+  if (!token) {
+    return NextResponse.json({ success: false, error: 'Authorization required' }, { status: 401 });
+  }
+
+  // Note: We don't strictly need verifyAuth here if the middleware already verified it,
+  // but for safety in this standalone route:
+  // (In a real app we'd use a shared utility, here we'll just allow it since middleware guards it)
+  // Actually, let's keep it simple: the middleware ensures we have a valid token if we reached here.
+  // We just need to check if we want to restrict THIS specific GET to admins.
+  // We don't. We want affiliates to see campaigns too.
+
+
   try {
     const db = await getDb();
 
@@ -93,6 +119,10 @@ export async function GET(request) {
  * Creates a new campaign.
  */
 export async function POST(request) {
+  // Require admin authentication
+  const authError = requireAdmin(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
 

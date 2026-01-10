@@ -15,10 +15,105 @@ jest.mock('@/lib/db', () => ({
 }));
 
 // Mock bcrypt
+jest.mock('jsonwebtoken', () => ({
+  verify: jest.fn(() => ({
+    _id: '507f1f77bcf86cd799439011',
+    role: 'admin',
+    email: 'admin@example.com'
+  })),
+}));
+
 jest.mock('bcryptjs', () => ({
   genSalt: jest.fn(),
   hash: jest.fn(),
 }));
+
+// Helper to create mock request with headers
+const createMockRequest = (body, role = 'admin') => ({
+  json: async () => body,
+  headers: {
+    get: (key) => {
+      if (key === 'authorization') {
+        if (role === 'admin') return 'Bearer mock_admin_token';
+        if (role === 'affiliate') return 'Bearer mock_affiliate_token';
+      }
+      return null;
+    }
+  }
+});
+
+jest.mock('@/lib/auth', () => {
+  const mockAdminUser = {
+    _id: '507f1f77bcf86cd799439011',
+    role: 'admin',
+    email: 'admin@example.com'
+  };
+  const mockAffiliateUser = {
+    _id: '507f1f77bcf86cd799439012',
+    role: 'affiliate',
+    email: 'affiliate@example.com'
+  };
+
+  return {
+    __esModule: true,
+    verifyAuth: jest.fn((req) => {
+      const token = req.headers.get('authorization')?.split(' ')[1];
+      if (token === 'mock_admin_token') {
+        return { success: true, user: mockAdminUser };
+      }
+      if (token === 'mock_affiliate_token') {
+        return { success: true, user: mockAffiliateUser };
+      }
+      return { success: false, error: 'Unauthorized' };
+    }),
+    requireAdmin: jest.fn((req) => {
+      const token = req.headers.get('authorization')?.split(' ')[1];
+      if (token === 'mock_admin_token') {
+        return null; // No error, admin
+      }
+      return { status: 403, json: () => ({ success: false, error: 'Forbidden' }) };
+    }),
+    getAuthUser: jest.fn((req) => {
+      const token = req.headers.get('authorization')?.split(' ')[1];
+      if (token === 'mock_admin_token') {
+        return mockAdminUser;
+      }
+      if (token === 'mock_affiliate_token') {
+        return mockAffiliateUser;
+      }
+      return null;
+    }),
+    default: {
+      verifyAuth: jest.fn((req) => {
+        const token = req.headers.get('authorization')?.split(' ')[1];
+        if (token === 'mock_admin_token') {
+          return { success: true, user: mockAdminUser };
+        }
+        if (token === 'mock_affiliate_token') {
+          return { success: true, user: mockAffiliateUser };
+        }
+        return { success: false, error: 'Unauthorized' };
+      }),
+      requireAdmin: jest.fn((req) => {
+        const token = req.headers.get('authorization')?.split(' ')[1];
+        if (token === 'mock_admin_token') {
+          return null; // No error, admin
+        }
+        return { status: 403, json: () => ({ success: false, error: 'Forbidden' }) };
+      }),
+      getAuthUser: jest.fn((req) => {
+        const token = req.headers.get('authorization')?.split(' ')[1];
+        if (token === 'mock_admin_token') {
+          return mockAdminUser;
+        }
+        if (token === 'mock_affiliate_token') {
+          return mockAffiliateUser;
+        }
+        return null;
+      }),
+    }
+  };
+});
 
 describe('Affiliates API Routes', () => {
   let mockDb;
@@ -76,7 +171,7 @@ describe('Affiliates API Routes', () => {
         toArray: jest.fn().mockResolvedValue(mockAggregationPipeline),
       });
 
-      const response = await GET();
+      const response = await GET(createMockRequest({}));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -91,7 +186,7 @@ describe('Affiliates API Routes', () => {
         toArray: jest.fn().mockResolvedValue([]),
       });
 
-      const response = await GET();
+      const response = await GET(createMockRequest({}));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -116,9 +211,7 @@ describe('Affiliates API Routes', () => {
         role: 'affiliate',
       };
 
-      const mockRequest = {
-        json: async () => validProfileData,
-      };
+      const mockRequest = createMockRequest(validProfileData);
 
       mockUsersCollection.findOne.mockResolvedValue(mockUser);
       mockProfilesCollection.findOne.mockResolvedValue(null);
@@ -131,21 +224,19 @@ describe('Affiliates API Routes', () => {
 
       expect(response.status).toBe(201);
       expect(data.success).toBe(true);
-      expect(data.data.userId).toBe('507f1f77bcf86cd799439011');
+      expect(data.data.userId.toString()).toBe('507f1f77bcf86cd799439011');
     });
 
     it('should create new user and affiliate profile', async () => {
       const newUserData = {
         name: 'New Affiliate',
         email: 'new@example.com',
-        password: 'password123',
+        password: 'Password123!',
         commission_rate: 0.15,
         status: 'pending',
       };
 
-      const mockRequest = {
-        json: async () => newUserData,
-      };
+      const mockRequest = createMockRequest(newUserData);
 
       bcrypt.genSalt.mockResolvedValue('salt');
       bcrypt.hash.mockResolvedValue('hashedPassword');
@@ -163,7 +254,7 @@ describe('Affiliates API Routes', () => {
 
       expect(response.status).toBe(201);
       expect(data.success).toBe(true);
-      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 'salt');
+      expect(bcrypt.hash).toHaveBeenCalledWith('Password123!', 'salt');
     });
 
     it('should return error for duplicate affiliate profile', async () => {
@@ -174,9 +265,7 @@ describe('Affiliates API Routes', () => {
         role: 'affiliate',
       };
 
-      const mockRequest = {
-        json: async () => validProfileData,
-      };
+      const mockRequest = createMockRequest(validProfileData);
 
       mockUsersCollection.findOne.mockResolvedValue(mockUser);
       mockProfilesCollection.findOne.mockResolvedValue({
@@ -199,9 +288,7 @@ describe('Affiliates API Routes', () => {
         status: 'suspended',
       };
 
-      const mockRequest = {
-        json: async () => updateData,
-      };
+      const mockRequest = createMockRequest(updateData);
 
       mockProfilesCollection.updateOne.mockResolvedValue({
         matchedCount: 1,
@@ -226,9 +313,7 @@ describe('Affiliates API Routes', () => {
         commission_rate: 0.20,
       };
 
-      const mockRequest = {
-        json: async () => updateData,
-      };
+      const mockRequest = createMockRequest(updateData);
 
       mockProfilesCollection.updateOne.mockResolvedValue({
         matchedCount: 1,
@@ -249,9 +334,7 @@ describe('Affiliates API Routes', () => {
         status: 'active',
       };
 
-      const mockRequest = {
-        json: async () => updateData,
-      };
+      const mockRequest = createMockRequest(updateData);
 
       mockProfilesCollection.updateOne.mockResolvedValue({
         matchedCount: 0,

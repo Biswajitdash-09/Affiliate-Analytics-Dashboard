@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -13,6 +15,16 @@ import FlaggedEventsTable from '@/components/dashboard/FlaggedEventsTable';
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'];
 
 const FraudPage = () => {
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  // Role check - redirect affiliates to their portal
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      router.push('/dashboard/my-portal');
+      return;
+    }
+  }, [user, router]);
     const [data, setData] = useState({
         effectiveness: { totalClicks: 0, totalFraud: 0, blockRate: 0 },
         fraudByReason: [],

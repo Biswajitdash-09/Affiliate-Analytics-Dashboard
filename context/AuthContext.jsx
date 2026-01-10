@@ -88,9 +88,13 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        // 2. If registration successful, auto-login to get the token
-        // The register API doesn't return a token, so we must login explicitly
-        return await login(userData.email, userData.password);
+        // 2. Registration successful
+        // Return success with indication that verification is required
+        return {
+          success: true,
+          requiresVerification: true,
+          email: userData.email
+        };
       } else {
         return { success: false, error: data.error || "Registration failed" };
       }
@@ -100,7 +104,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const verifyEmail = async (email, otp) => {
+    try {
+      const response = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Verification error:", error);
+      return { success: false, error: "An unexpected error occurred" };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      // Clear cookie on server
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
+
     // Clear state
     setUser(null);
     setToken(null);
@@ -119,6 +148,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    verifyEmail,
+    logout,
     logout,
     isAuthenticated: !!token,
   };

@@ -238,8 +238,6 @@ export async function POST(request) {
     // Validate profile data using model helper
     const validationError = validateAffiliateProfile(profileData);
     if (validationError) {
-      // Note: If we just created a user, in a real transaction we would rollback.
-      // Here we return error, leaving the user created but without a profile (which is technically valid state).
       return NextResponse.json(
         { success: false, error: validationError },
         { status: 400 }

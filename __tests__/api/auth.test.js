@@ -52,7 +52,7 @@ describe('Authentication API Routes', () => {
       const userData = {
         name: 'Test User',
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password123!',
       };
 
       const mockRequest = {
@@ -72,14 +72,14 @@ describe('Authentication API Routes', () => {
       expect(response.status).toBe(201);
       expect(data.success).toBe(true);
       expect(data.data.email).toBe('test@example.com');
-      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 'salt');
+      expect(bcrypt.hash).toHaveBeenCalledWith('Password123!', 'salt');
     });
 
     it('should return error for duplicate email', async () => {
       const userData = {
         name: 'Test User',
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password123!',
       };
 
       const mockRequest = {
@@ -102,7 +102,7 @@ describe('Authentication API Routes', () => {
       const userData = {
         name: 'Test User',
         email: 'invalid-email',
-        password: 'password123',
+        password: 'Password123!',
       };
 
       const mockRequest = {
@@ -138,7 +138,7 @@ describe('Authentication API Routes', () => {
     it('should login with valid credentials', async () => {
       const credentials = {
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password123!',
       };
 
       const mockUser = {
@@ -147,6 +147,7 @@ describe('Authentication API Routes', () => {
         email: 'test@example.com',
         password: 'hashedPassword',
         role: 'affiliate',
+        verified: true,
       };
 
       const mockRequest = {
@@ -163,7 +164,7 @@ describe('Authentication API Routes', () => {
       expect(data.success).toBe(true);
       expect(data.token).toBeDefined();
       expect(data.user.email).toBe('test@example.com');
-      expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashedPassword');
+      expect(bcrypt.compare).toHaveBeenCalledWith('Password123!', 'hashedPassword');
     });
 
     it('should return error for invalid credentials', async () => {
@@ -178,6 +179,7 @@ describe('Authentication API Routes', () => {
         email: 'test@example.com',
         password: 'hashedPassword',
         role: 'affiliate',
+        verified: true,
       };
 
       const mockRequest = {
@@ -198,7 +200,7 @@ describe('Authentication API Routes', () => {
     it('should return error for non-existent user', async () => {
       const credentials = {
         email: 'nonexistent@example.com',
-        password: 'password123',
+        password: 'Password123!',
       };
 
       const mockRequest = {

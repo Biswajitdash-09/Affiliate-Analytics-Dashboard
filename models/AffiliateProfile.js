@@ -24,7 +24,7 @@ export const AffiliateProfileSchema = {
     default: AFFILIATE_STATUS.PENDING
   },
   total_earnings: { type: 'number', default: 0 },
-  pending_payouts: { type: 'number', default: 0 },
+  pendingPayouts: { type: 'number', default: 0 }, // Changed from snake_case to camelCase
   createdAt: { type: 'date', default: () => new Date().toISOString() }
 };
 
@@ -83,9 +83,10 @@ export function validateAffiliateProfile(data) {
 
 /**
  * Creates indexes for the Affiliate Profiles collection
- * @param {import('mongodb').Db} db 
+ * @param {import('mongodb').Db} db
  */
 export async function initAffiliateProfileIndexes(db) {
   await db.collection(AFFILIATE_PROFILES_COLLECTION).createIndex({ userId: 1 }, { unique: true });
   await db.collection(AFFILIATE_PROFILES_COLLECTION).createIndex({ status: 1 });
+  await db.collection(AFFILIATE_PROFILES_COLLECTION).createIndex({ commission_rate: 1 }, { sparse: true }); // Filter by commission rate
 }

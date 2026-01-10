@@ -350,7 +350,7 @@ async function updateAffiliateEarnings(database, affiliateId, amount) {
       {
         $inc: {
           total_earnings: amount,
-          pending_payouts: amount,
+          pendingPayouts: amount,
         },
         $set: {
           last_earning_date: new Date().toISOString(),

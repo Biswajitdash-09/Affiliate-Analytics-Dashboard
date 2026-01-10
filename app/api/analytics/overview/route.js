@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { requireAuth, getAuthUser } from '@/lib/auth';
 
 // Collection names
 const CLICK_EVENTS_COLLECTION = 'click_events';
 const REVENUES_COLLECTION = 'revenues';
 const CAMPAIGNS_COLLECTION = 'campaigns';
+
+/**
+ * GET /api/analytics/overview
+ * Returns aggregated analytics data (KPIs and Chart Data)
+ * Query Params: startDate, endDate (ISO strings or YYYY-MM-DD)
+ *
+ * Role-based Access:
+ * - Admin: Returns global analytics (all affiliates)
+ * - Affiliate: Returns only their own analytics
+ */
 
 /**
  * Helper function to seed sample analytics data if the collections are empty.
@@ -117,6 +128,14 @@ async function seedSampleData(db) {
  * Query Params: startDate, endDate (ISO strings or YYYY-MM-DD)
  */
 export async function GET(request) {
+  // Require authentication
+  const authError = requireAuth(request);
+  if (authError) return authError;
+
+  const authUser = getAuthUser(request);
+  const userRole = authUser?.role || 'affiliate';
+  const userId = authUser?.userId;
+
   try {
     const { searchParams } = new URL(request.url);
     const startDateParam = searchParams.get('startDate');
@@ -136,24 +155,38 @@ export async function GET(request) {
     if (startDateParam && endDateParam) {
       startDate = new Date(startDateParam);
       endDate = new Date(endDateParam);
-      // Ensure endDate covers the full day
       endDate.setHours(23, 59, 59, 999);
     } else {
       // Default: Last 30 Days
       endDate = new Date();
-      startDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+      startDate = new Date(endDate); // Create startDate from endDate to avoid timezone issues
       startDate.setDate(startDate.getDate() - 30);
       startDate.setHours(0, 0, 0, 0);
+    }
+
+    // Build match queries based on user role
+    const baseClickMatch = {
+      createdAt: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
+      filtered: false // Only count non-filtered clicks
+    };
+
+    const baseRevenueMatch = {
+      createdAt: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
+      status: 'succeeded'
+    };
+
+    // If affiliate, add affiliateId filter
+    if (userRole === 'affiliate' && userId) {
+      baseClickMatch.affiliateId = userId;
+      baseRevenueMatch.affiliateId = userId;
     }
 
     // Aggregate clicks and revenues separately
     const [clickResults, revenueResults] = await Promise.all([
       clickCollection.aggregate([
         {
-          $match: {
-            createdAt: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
-            filtered: false // Only count non-filtered clicks
-          }
+          $match: baseClickMatch
         },
         {
           $addFields: {
@@ -181,10 +214,7 @@ export async function GET(request) {
       ]).toArray(),
       revenueCollection.aggregate([
         {
-          $match: {
-            createdAt: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
-            status: 'succeeded'
-          }
+          $match: baseRevenueMatch
         },
         {
           $addFields: {
@@ -215,16 +245,30 @@ export async function GET(request) {
     ]);
 
     // Fetch recent activity (Clicks & Conversions)
+    // Apply role-based filtering
+    const recentClickMatch = { filtered: false };
+    const recentRevenueMatch = { status: 'succeeded' };
+    
+    if (userRole === 'affiliate' && userId) {
+      recentClickMatch.affiliateId = userId;
+      recentRevenueMatch.affiliateId = userId;
+    }
+
     const [recentClicks, recentRevenues] = await Promise.all([
       clickCollection.aggregate([
+        { $match: recentClickMatch },
         { $sort: { createdAt: -1 } },
         { $limit: 10 },
         {
           $lookup: {
             from: CAMPAIGNS_COLLECTION,
-            let: { campaignIdObj: { $toObjectId: "$campaignId" } }, // Try to convert string ID to ObjectId
+            let: { campaignId: "$campaignId" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$_id", "$$campaignIdObj"] } } }
+              { $match: { $expr: { $and: [
+                { $ne: ["$$campaignId", null] },
+                { $ne: ["$$campaignId", ""] }
+              ]}}},
+              { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$campaignId" }] } } }
             ],
             as: "campaign"
           }
@@ -253,14 +297,19 @@ export async function GET(request) {
         }
       ]).toArray(),
       revenueCollection.aggregate([
+        { $match: recentRevenueMatch },
         { $sort: { createdAt: -1 } },
         { $limit: 10 },
         {
           $lookup: {
             from: CAMPAIGNS_COLLECTION,
-            let: { campaignIdObj: { $toObjectId: "$campaignId" } },
+            let: { campaignId: "$campaignId" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$_id", "$$campaignIdObj"] } } }
+              { $match: { $expr: { $and: [
+                { $ne: ["$$campaignId", null] },
+                { $ne: ["$$campaignId", ""] }
+              ]}}},
+              { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$campaignId" }] } } }
             ],
             as: "campaign"
           }

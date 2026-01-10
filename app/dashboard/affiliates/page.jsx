@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Table from "@/components/ui/Table";
 import Modal from "@/components/ui/Modal";
 import LinkGenerator from "@/components/dashboard/LinkGenerator";
@@ -8,8 +9,20 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/Icon";
 import FunnelChart from "@/components/dashboard/FunnelChart";
+import { useAuth } from "@/context/AuthContext";
 
 const AffiliatesPage = () => {
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  // Role check - redirect affiliates to their portal
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      router.push('/dashboard/my-portal');
+      return;
+    }
+  }, [user, router]);
+  
   // State Management
   const [affiliates, setAffiliates] = useState([]);
   const [funnelData, setFunnelData] = useState([]);

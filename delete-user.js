@@ -5,7 +5,7 @@
  */
 
 const { MongoClient } = require('mongodb');
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 
 async function deleteUser(email) {
     const uri = process.env.MONGODB_URI;

@@ -93,7 +93,7 @@ export async function GET(request) {
                 {
                     $inc: {
                         total_earnings: commissionAmount,
-                        pending_payouts: commissionAmount
+                        pendingPayouts: commissionAmount
                     }
                 }
             );

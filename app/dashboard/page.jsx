@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import Card from "@/components/ui/Card";
 import Chart from "@/components/ui/Chart";
@@ -13,6 +14,7 @@ const DashboardPage = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+  const router = useRouter();
   const [analyticsData, setAnalyticsData] = useState({
     kpis: {
       totalClicks: 0,
@@ -76,8 +78,22 @@ const DashboardPage = () => {
     }
   }, []);
 
+  // Role check - redirect affiliates to their portal
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      router.push('/dashboard/my-portal');
+      return;
+    }
+  }, [user, router]);
+
   // Initial fetch (Last 30 Days default)
   useEffect(() => {
+    // Only fetch if user is admin
+    if (user?.role !== 'admin') {
+      router.push('/dashboard/my-portal');
+      return;
+    }
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 30);
@@ -93,7 +109,7 @@ const DashboardPage = () => {
         if (data.success) setLeaderboards(data.data);
       })
       .catch(err => console.error('Leaderboards fetch error:', err));
-  }, [fetchAnalytics]);
+  }, [fetchAnalytics, user, router]);
 
   // Handle date range changes from filter
   const handleRangeChange = ({ startDate, endDate }) => {

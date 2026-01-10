@@ -12,22 +12,40 @@ const Sidebar = () => {
   const { user } = useAuth();
 
   const navItems = [
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: "LayoutDashboard",
-    },
-    // Only show Affiliates management to admins
-    ...(user?.role === 'admin' ? [{
-      name: "Affiliates",
-      href: "/dashboard/affiliates",
-      icon: "Users",
-    }] : []),
-    {
-      name: "Campaigns",
-      href: "/dashboard/campaigns",
-      icon: "Megaphone",
-    },
+    // Role-based Dashboard
+    ...(user?.role === 'admin' ? [
+      {
+        name: "Dashboard",
+        href: "/dashboard",
+        icon: "LayoutDashboard",
+      },
+      {
+        name: "Affiliates",
+        href: "/dashboard/affiliates",
+        icon: "Users",
+      },
+      {
+        name: "Campaigns",
+        href: "/dashboard/campaigns",
+        icon: "Megaphone",
+      },
+      {
+        name: "Payouts",
+        href: "/dashboard/payouts",
+        icon: "CreditCard",
+      },
+    ] : [
+      {
+        name: "My Portal",
+        href: "/dashboard/my-portal",
+        icon: "LayoutDashboard",
+      },
+      {
+        name: "Available Campaigns",
+        href: "/dashboard/campaigns",
+        icon: "Megaphone",
+      },
+    ]),
   ];
 
   const secondaryItems = [

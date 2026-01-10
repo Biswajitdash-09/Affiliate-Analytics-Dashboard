@@ -174,7 +174,7 @@ describe('Payouts API Routes', () => {
       const mockProfile = {
         _id: new ObjectId('507f1f77bcf86cd799439011'),
         userId: new ObjectId('507f1f77bcf86cd799439011'),
-        pending_payouts: 5000.00,
+        pendingPayouts: 5000.00,
         total_paid: 0,
       };
 
@@ -206,7 +206,7 @@ describe('Payouts API Routes', () => {
             last_payout_date: expect.any(String),
           }),
           $inc: expect.objectContaining({
-            pending_payouts: -2500.00,
+            pendingPayouts: -2500.00,
             total_paid: 2500.00,
           }),
         })
@@ -217,7 +217,7 @@ describe('Payouts API Routes', () => {
       const mockProfile = {
         _id: new ObjectId('507f1f77bcf86cd799439011'),
         userId: new ObjectId('507f1f77bcf86cd799439011'),
-        pending_payouts: 1000.00, // Less than requested amount
+        pendingPayouts: 1000.00, // Less than requested amount
         total_paid: 0,
       };
 

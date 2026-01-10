@@ -58,7 +58,7 @@ export async function GET(request) {
         // 4. Calculate summary stats
         const stats = {
             totalEarnings: profile.total_earnings || 0,
-            pendingPayouts: profile.pending_payouts || 0,
+            pendingPayouts: profile.pendingPayouts || 0,
             totalPaid: profile.total_paid || 0,
             totalClicks: profile.total_clicks || 0,
             commissionRate: profile.commission_rate || 0.10,
